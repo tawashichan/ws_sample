@@ -67,12 +67,16 @@ func wsConnection(conn net.Conn) {
 		}
 		readWsPacket(b)
 		res := WsPacket{}
-		c.Write(res.ToByte())
+		i, err := c.Write(res.ToByte())
+		fmt.Println(i)
+		if err != nil {
+			panic(err)
+		}
 		break
 	}
 }
 
-func byteToBynaryDigit(b byte) {
+func byteToBinaryDigit(b byte) {
 	fmt.Printf("%d%d%d%d%d%d%d%d\n",
 		b&127,
 		b&64,
@@ -90,15 +94,17 @@ func readWsPacket(b []byte) {
 		return
 	}
 	firstByte := b[0]
-	fin := firstByte & 1
-	rsv1 := firstByte & 2
-	rsv2 := firstByte & 4
-	rsv3 := firstByte & 8
-	opCode := (firstByte&127)*2*2*2 + (firstByte&64)*2*2 + (firstByte&32)*2 + (firstByte&16)*1
+	fin := firstByte & 127
+	rsv1 := firstByte & 64
+	rsv2 := firstByte & 32
+	rsv3 := firstByte & 16
+	opCode := (firstByte&8)*2*2*2 + (firstByte&4)*2*2 + (firstByte&2)*2 + (firstByte&1)*1
 	secondByte := b[1]
+	fmt.Println(b)
 	mask := secondByte & 127
 	payloadLength := (secondByte&64)*2*2*2*2*2*2 + (secondByte&32)*2*2*2*2*2 + (secondByte&16)*2*2*2*2 + (secondByte&8)*2*2*2 + (secondByte&4)*2*2 + (secondByte&2)*2 + (secondByte&1)*1
-	//byteToBynaryDigit(secondByte)
+	fmt.Println(secondByte)
+	byteToBinaryDigit(secondByte)
 	// payloadの長さが7ビットで表せるかチェック
 	if payloadLength > 128 {
 	}
@@ -106,10 +112,10 @@ func readWsPacket(b []byte) {
 	maskKey := b[2:6]
 	payload := b[6:]
 	fmt.Printf("fin:%d\nrsv:%d\nrsv2:%d\nrsv3:%d\nopCode:%d\nmask:%d\npayloadLen:%d\n", fin, rsv1, rsv2, rsv3, opCode, mask, payloadLength)
-	fmt.Println(string(unMaskPayload(int(payloadLength), maskKey, payload)))
+	fmt.Println(string(convertPayload(int(payloadLength), maskKey, payload)))
 }
 
-func unMaskPayload(payloadLen int, maskKey []byte, maskedPayload []byte) []byte {
+func convertPayload(payloadLen int, maskKey []byte, maskedPayload []byte) []byte {
 	var result = []byte{}
 	for i := 0; i < len(maskedPayload); i++ {
 		result = append(result, maskedPayload[i]^maskKey[i%4])

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
+	"log"
+	"time"
 )
 
 func main() {
@@ -11,7 +13,21 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("start sending message")
-	client.WriteMessage(websocket.TextMessage, []byte("a"))
+
+	go func() {
+		for {
+			_, message, err := client.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			fmt.Println(message)
+		}
+	}()
+
+	client.WriteMessage(websocket.TextMessage, []byte("ab"))
+
+	time.Sleep(1000 * time.Millisecond)
 	//client.WriteMessage(websocket.TextMessage, []byte("b"))
 	//client.WriteMessage(websocket.TextMessage, []byte("c"))
 }
