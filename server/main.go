@@ -86,7 +86,6 @@ func byteToBynaryDigit(b byte) {
 }
 
 func readWsPacket(b []byte) {
-	fmt.Println(b)
 	if len(b) == 0 {
 		return
 	}
@@ -99,24 +98,20 @@ func readWsPacket(b []byte) {
 	secondByte := b[1]
 	mask := secondByte & 127
 	payloadLength := (secondByte&64)*2*2*2*2*2*2 + (secondByte&32)*2*2*2*2*2 + (secondByte&16)*2*2*2*2 + (secondByte&8)*2*2*2 + (secondByte&4)*2*2 + (secondByte&2)*2 + (secondByte&1)*1
-	byteToBynaryDigit(secondByte)
+	//byteToBynaryDigit(secondByte)
 	// payloadの長さが7ビットで表せるかチェック
 	if payloadLength > 128 {
 	}
 	//if mask == 1 {}
 	maskKey := b[2:6]
-	fmt.Println(maskKey)
-
 	payload := b[6:]
 	fmt.Printf("fin:%d\nrsv:%d\nrsv2:%d\nrsv3:%d\nopCode:%d\nmask:%d\npayloadLen:%d\n", fin, rsv1, rsv2, rsv3, opCode, mask, payloadLength)
-	fmt.Println(payload)
 	fmt.Println(string(unMaskPayload(int(payloadLength), maskKey, payload)))
 }
 
 func unMaskPayload(payloadLen int, maskKey []byte, maskedPayload []byte) []byte {
 	var result = []byte{}
 	for i := 0; i < len(maskedPayload); i++ {
-		fmt.Println(i)
 		result = append(result, maskedPayload[i]^maskKey[i%4])
 	}
 	return result

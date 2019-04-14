@@ -11,5 +11,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("start sending message")
-	client.WriteMessage(websocket.TextMessage, []byte("abcdefg"))
+	client.WriteMessage(websocket.TextMessage, []byte("a"))
+	//client.WriteMessage(websocket.TextMessage, []byte("b"))
+	//client.WriteMessage(websocket.TextMessage, []byte("c"))
 }
