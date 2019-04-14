@@ -76,35 +76,36 @@ func wsConnection(conn net.Conn) {
 	}
 }
 
-func byteToBinaryDigit(b byte) {
-	fmt.Printf("%d%d%d%d%d%d%d%d\n",
-		b&127,
-		b&64,
-		b&32,
-		b&16,
-		b&8,
-		b&4,
-		b&2,
-		b&1,
-	)
+func ByteToBinaryDigit(b byte) string {
+	fmt.Println(b)
+	var result = ""
+	for i := 7; i >= 0; i-- {
+		result = result + fmt.Sprint(refBit(b, uint(i)))
+	}
+	return result
+}
+
+func refBit(target byte, num uint) int {
+	return (int(target) >> num) & 1
 }
 
 func readWsPacket(b []byte) {
 	if len(b) == 0 {
 		return
 	}
+
+	//byteToBinaryDigit(130)
+
 	firstByte := b[0]
-	fin := firstByte & 127
-	rsv1 := firstByte & 64
-	rsv2 := firstByte & 32
-	rsv3 := firstByte & 16
-	opCode := (firstByte&8)*2*2*2 + (firstByte&4)*2*2 + (firstByte&2)*2 + (firstByte&1)*1
+	fin := refBit(firstByte, 7)
+	rsv1 := refBit(firstByte, 6)
+	rsv2 := refBit(firstByte, 5)
+	rsv3 := refBit(firstByte, 4)
+	opCode := refBit(firstByte, 3)*2*2*2 + refBit(firstByte, 2)*2*2 + refBit(firstByte, 1)*2 + refBit(firstByte, 0)*1
 	secondByte := b[1]
-	fmt.Println(b)
-	mask := secondByte & 127
-	payloadLength := (secondByte&64)*2*2*2*2*2*2 + (secondByte&32)*2*2*2*2*2 + (secondByte&16)*2*2*2*2 + (secondByte&8)*2*2*2 + (secondByte&4)*2*2 + (secondByte&2)*2 + (secondByte&1)*1
-	fmt.Println(secondByte)
-	byteToBinaryDigit(secondByte)
+	fmt.Println(ByteToBinaryDigit(secondByte))
+	mask := refBit(firstByte, 7)
+	payloadLength := refBit(secondByte, 6)*2*2*2*2*2*2 + refBit(secondByte, 5)*2*2*2*2*2 + refBit(secondByte, 4)*2*2*2*2 + refBit(secondByte, 3)*2*2*2 + refBit(secondByte, 2)*2*2 + refBit(secondByte, 1)*2 + refBit(secondByte, 0)*1
 	// payloadの長さが7ビットで表せるかチェック
 	if payloadLength > 128 {
 	}
