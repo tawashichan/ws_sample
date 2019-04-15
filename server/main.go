@@ -31,7 +31,7 @@ type WsPacket struct {
 func (w WsPacket) ToByte() []byte {
 	var base = []byte{}
 	//payload := []byte("huga")
-	return append(base, []byte("huga")...)
+	return append(base, []byte{}...)
 }
 
 func Upgrade(conn net.Conn) (net.Conn, error) {
@@ -65,9 +65,14 @@ func wsConnection(conn net.Conn) {
 		if err != nil {
 			panic(err)
 		}
-		readWsPacket(b)
-		res := WsPacket{}
-		i, err := c.Write(res.ToByte())
+		resB := b
+		for {
+			b = readWsPacket(b)
+			if len(b) == 0 {
+				break
+			}
+		}
+		i, err := c.Write(resB)
 		fmt.Println(i)
 		if err != nil {
 			panic(err)
@@ -77,7 +82,6 @@ func wsConnection(conn net.Conn) {
 }
 
 func ByteToBinaryDigit(b byte) string {
-	fmt.Println(b)
 	var result = ""
 	for i := 7; i >= 0; i-- {
 		result = result + fmt.Sprint(refBit(b, uint(i)))
@@ -89,35 +93,39 @@ func refBit(target byte, num uint) int {
 	return (int(target) >> num) & 1
 }
 
-func readWsPacket(b []byte) {
+func readWsPacket(b []byte) []byte {
 	if len(b) == 0 {
-		return
+		return []byte{}
 	}
-
-	//byteToBinaryDigit(130)
-
 	firstByte := b[0]
 	fin := refBit(firstByte, 7)
 	rsv1 := refBit(firstByte, 6)
 	rsv2 := refBit(firstByte, 5)
 	rsv3 := refBit(firstByte, 4)
+	//本当は16進数に変換する必要がある
 	opCode := refBit(firstByte, 3)*2*2*2 + refBit(firstByte, 2)*2*2 + refBit(firstByte, 1)*2 + refBit(firstByte, 0)*1
 	secondByte := b[1]
-	fmt.Println(ByteToBinaryDigit(secondByte))
 	mask := refBit(firstByte, 7)
+	//payloadのバイト長を取得
 	payloadLength := refBit(secondByte, 6)*2*2*2*2*2*2 + refBit(secondByte, 5)*2*2*2*2*2 + refBit(secondByte, 4)*2*2*2*2 + refBit(secondByte, 3)*2*2*2 + refBit(secondByte, 2)*2*2 + refBit(secondByte, 1)*2 + refBit(secondByte, 0)*1
 	// payloadの長さが7ビットで表せるかチェック
 	if payloadLength > 128 {
 	}
+	// payloadがmaskされているかチェック。RFCの規定ではクライアントからサーバーに送る際は必ずmaskするので、一旦スキップ
 	//if mask == 1 {}
+	// maskフラグが立っていれば,maskKeyを取得する必要がある
 	maskKey := b[2:6]
-	payload := b[6:]
+	//次のpayloadの開始地点がわからないので、ここで切る必要がある？
+	payloadEnd := 6 + payloadLength
+	payload := b[6:payloadEnd]
 	fmt.Printf("fin:%d\nrsv:%d\nrsv2:%d\nrsv3:%d\nopCode:%d\nmask:%d\npayloadLen:%d\n", fin, rsv1, rsv2, rsv3, opCode, mask, payloadLength)
-	fmt.Println(string(convertPayload(int(payloadLength), maskKey, payload)))
+	fmt.Printf("payload: %s\n", string(convertPayload(int(payloadLength), maskKey, payload)))
+	return b[payloadEnd:]
 }
 
 func convertPayload(payloadLen int, maskKey []byte, maskedPayload []byte) []byte {
 	var result = []byte{}
+	//1バイトずつpayloadを切り出して変換していく
 	for i := 0; i < len(maskedPayload); i++ {
 		result = append(result, maskedPayload[i]^maskKey[i%4])
 	}
@@ -138,6 +146,7 @@ func main() {
 	fmt.Println("start websocket server")
 	for {
 		conn, err := listener.Accept()
+		fmt.Println("new connection")
 		if err != nil {
 			panic(err)
 		}

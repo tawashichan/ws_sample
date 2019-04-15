@@ -21,13 +21,14 @@ func main() {
 				log.Println("read:", err)
 				return
 			}
+			fmt.Println("new message")
 			fmt.Println(message)
 		}
 	}()
 
 	client.WriteMessage(websocket.TextMessage, []byte("ab"))
+	time.Sleep(2000 * time.Millisecond)
 
-	time.Sleep(1000 * time.Millisecond)
 	//client.WriteMessage(websocket.TextMessage, []byte("b"))
 	//client.WriteMessage(websocket.TextMessage, []byte("c"))
 }
