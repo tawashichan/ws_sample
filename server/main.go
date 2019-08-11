@@ -70,16 +70,18 @@ func wsConnection(conn net.Conn) {
 		panic(err)
 	}
 	for {
-		// ws frameは小さくて7バイトなので、一旦7バイトで区切る
+		// ws frameは小さくて8バイトなので、一旦8バイトで区切る
 		buf := make([]byte,8)
-		_,err := c.Read(buf)
+		size,err := c.Read(buf)
+		if size == 0 {
+			continue
+		} 
 		if err != nil {
 			panic(err)
 		}
 		wsPacket := readWsPacket(buf)
 		fmt.Println(string(wsPacket))
 		c.Write([]byte{129, 2, 101, 101})
-		break
 	}
 }
 

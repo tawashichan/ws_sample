@@ -26,11 +26,8 @@ func main() {
 		}
 	}()
 
-	go conn.WriteMessage(websocket.TextMessage, []byte("ab"))
-	go conn.WriteMessage(websocket.TextMessage, []byte("cd"))
+	conn.WriteMessage(websocket.TextMessage, []byte("ab"))
+	conn.WriteMessage(websocket.TextMessage, []byte("cd"))
 
 	time.Sleep(5000 * time.Millisecond)
-
-	//client.WriteMessage(websocket.TextMessage, []byte("b"))
-	//client.WriteMessage(websocket.TextMessage, []byte("c"))
 }
