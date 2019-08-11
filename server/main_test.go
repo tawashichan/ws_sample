@@ -26,3 +26,16 @@ func TestByteToBinaryDigit2(t *testing.T) {
 		t.Error(result)
 	}
 }
+
+func TestByteToBinaryDigit3(t *testing.T) {
+	result := ByteToBinaryDigit(2)
+	test := "00000010"
+	if result != test {
+		t.Error(result)
+	}
+}
+
+func TestReadPacket(t *testing.T) {
+	readWsPacket([]byte{129, 2, 101, 101})
+	t.Error()
+}
