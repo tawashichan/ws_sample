@@ -70,35 +70,15 @@ func wsConnection(conn net.Conn) {
 		panic(err)
 	}
 	for {
-		/*b, err := ioutil.ReadAll(c)
+		// ws frameは小さくて7バイトなので、一旦7バイトで区切る
+		buf := make([]byte,8)
+		_,err := c.Read(buf)
 		if err != nil {
 			panic(err)
 		}
-		for {
-			b = readWsPacket(b)
-			i, err := c.Write([]byte{129,130,142,155,32,170,235,253})
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(i)
-			if len(b) == 0 {
-				break
-			}
-		}*/
-
-		go func(){
-			// ws frameは小さくて7バイトなので、一旦7バイトで区切る
-			buf := make([]byte,8)
-			_,err := c.Read(buf)
-			if err != nil {
-				panic(err)
-			}
-			wsPacket := readWsPacket(buf)
-			fmt.Println(string(wsPacket))
-		}()
-		//readWsPacket([]byte{129,2,101,101})
-		go c.Write([]byte{129, 2, 101, 101})
-		go c.Write([]byte{129, 2, 101, 101})
+		wsPacket := readWsPacket(buf)
+		fmt.Println(string(wsPacket))
+		c.Write([]byte{129, 2, 101, 101})
 		break
 	}
 }
@@ -177,7 +157,6 @@ func main() {
 	fmt.Println("start websocket server")
 	for {
 		conn, err := listener.Accept()
-		fmt.Println("new connection")
 		if err != nil {
 			panic(err)
 		}
